@@ -204,5 +204,5 @@ app.post("/:slug", async function (req, res) {
 const port: string = process.env.EXPRESS_PORT || "3000";
 
 app.listen(port, function () {
-  console.log("app listening on port 3001");
+  console.log("app listening on port 3000");
 });
