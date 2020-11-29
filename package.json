@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec npx ts-node src/index.ts",
-    "build": "tsc"
+    "prod": "tsc && node build/index.js"
   },
   "author": "",
   "license": "ISC",
