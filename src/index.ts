@@ -7,7 +7,7 @@ import path from "path";
 import { createLogger, format, transports } from "winston";
 const { combine, timestamp, label, printf } = format;
 
-dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const connectionString = process.env.DB_CONNECTION_STRING;
 
