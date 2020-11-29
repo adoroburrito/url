@@ -93,7 +93,7 @@ app.use(async (req: express.Request, res: express.Response, next) => {
 app.use((req: express.Request, res: express.Response, done) => {
   middlewareLogger.info({
     method: req.method,
-    ip: req.ip,
+    ip: req.headers["x-forwarded-for"] || req.connection.remoteAddress,
     transaction_id: res.locals.transaction_id,
     endpoint: req.path,
   });
