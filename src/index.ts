@@ -2,11 +2,12 @@ import express from "express";
 import validUrl from "valid-url";
 import pg, { Pool } from "pg";
 import dotenv from "dotenv";
+import path from "path";
 
 import { createLogger, format, transports } from "winston";
 const { combine, timestamp, label, printf } = format;
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
 const connectionString = process.env.DB_CONNECTION_STRING;
 
