@@ -1,55 +1,10 @@
 import express from "express";
 import validUrl from "valid-url";
-import pg, { Pool } from "pg";
-import dotenv from "dotenv";
-import path from "path";
+import db from "./db";
 
 import { createLogger, format, transports } from "winston";
 const { combine, timestamp, label, printf } = format;
 
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
-
-const connectionString = process.env.DB_CONNECTION_STRING;
-
-const pool = new Pool({
-  connectionString,
-});
-
-// checking connection health
-pool
-  .connect()
-  .then((client: pg.PoolClient) => {
-    return client
-      .query("SELECT now()")
-      .then((res) => {
-        client.release();
-        console.log(res.rows[0]);
-      })
-      .catch((err) => {
-        client.release();
-        console.log(err.stack);
-      });
-  })
-  .catch((connectionError) => {
-    console.error(connectionError);
-    process.exit();
-  });
-
-const query = async (queryString: string, queryArguments: string[]) => {
-  return await pool.connect().then((client: pg.PoolClient) => {
-    return client
-      .query(queryString, queryArguments)
-      .then((res) => {
-        client.release();
-        return [true, res.rows];
-      })
-      .catch((err) => {
-        client.release();
-        console.log(err.stack);
-        return [false, err.stack];
-      });
-  });
-};
 
 // Winston logger
 const loggerFormat = printf(({ level, message, label, timestamp }) => {
@@ -84,7 +39,7 @@ app.use(express.json());
 
 // Transaction ID middleware
 app.use(async (req: express.Request, res: express.Response, next) => {
-  const queryResult = await query(`select nextval('transaction_id')`, []);
+  const queryResult = await db.query(`select nextval('transaction_id')`, []);
   res.locals.transaction_id = queryResult[1][0].nextval;
   next();
 });
@@ -118,7 +73,7 @@ app.get("/:slug", async function (req: express.Request, res: express.Response) {
   let code = 200;
 
   // url exists?
-  const result = await query("SELECT * FROM urls WHERE slug = $1", [slug]);
+  const result = await db.query("SELECT * FROM urls WHERE slug = $1", [slug]);
 
   if (result[1].length === 0) {
     code = 404;
@@ -168,7 +123,7 @@ app.post("/:slug", async function (req, res) {
   }
 
   // url exists?
-  const result = await query("SELECT * FROM urls WHERE slug = $1", [slug]);
+  const result = await db.query("SELECT * FROM urls WHERE slug = $1", [slug]);
 
   if (result[1].length > 0) {
     code = 402;
@@ -185,7 +140,7 @@ app.post("/:slug", async function (req, res) {
     return;
   }
 
-  const insert = await query(
+  await db.query(
     "INSERT INTO urls(slug, redirect) VALUES ($1, $2)",
     [slug, redirect]
   );
