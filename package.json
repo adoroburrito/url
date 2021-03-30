@@ -13,6 +13,7 @@
     "@types/pg": "^7.14.6",
     "@types/sqlite3": "^3.1.6",
     "@types/valid-url": "^1.0.3",
+    "change-object-case": "^0.2.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "pg": "^8.5.1",
