@@ -2,7 +2,6 @@ import pg, { Pool, QueryResult } from "pg";
 import dotenv from "dotenv";
 import path from "path";
 import { camelCase, snakeCase } from "change-object-case";
-import { getProperty } from "../utils";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
@@ -42,25 +41,71 @@ const select = async (
   }
 };
 
-const generateWhere = (whereParams: Object): String => {
+const insert = async (
+  table: String,
+  insertParams: Object
+): Promise<QueryResult | false> => {
+  const query = `INSERT INTO ${table} (${generateInsertColumns(insertParams)}) VALUES (${generateInsertValues(insertParams)})`;
+
+  const client = await pool.connect();
+  try {
+    return client.query(query);
+  } catch (error) {
+    console.log(error);
+    return false;
+  } finally {
+    client.release();
+  }
+};
+
+const generateInsertColumns = (insertParams: Object) => {
+  insertParams = snakeCase(insertParams);
+  let columns = "";
+  for(const property in insertParams){
+    columns += `${property}, `;
+  }
+
+  return columns.slice(0, -2);
+}
+
+const generateInsertValues = (insertParams: any) => {
+  insertParams = snakeCase(insertParams);
+  let values = "";
+  for(const property in insertParams){
+    values += `${insertParams[property]}, `;
+  }
+
+  return values.slice(0, -2);
+}
+
+const nextVal = async (
+  sequenceName: String,
+): Promise<QueryResult | false> => {
+  const query = `SELECT nextval(${sequenceName})`;
+
+  const client = await pool.connect();
+  try {
+    return client.query(query);
+  } catch (error) {
+    console.log(error);
+    return false;
+  } finally {
+    client.release();
+  }
+};
+
+const generateWhere = (whereParams: any): String => {
   whereParams = snakeCase(whereParams);
-  const whereString = Object.keys(whereParams).reduce(
-    (accumulator: string, currentValue: string, index: number): string => {
-      if (index > 0) {
-        accumulator += ", ";
-      }
 
-      accumulator += `${currentValue} = ${getProperty(
-        whereParams,
-        currentValue
-      )}`;
+  let whereString = "";
 
-      return accumulator;
-    },
-    ""
-  );
+  for(const property in whereParams){
+    whereString += `${property} = ${whereParams[property]}, `
+  }
+
+  whereString = whereString.slice(0, -2);
 
   return whereString;
 };
 
-export { select };
+export { select, insert, nextVal };

@@ -1,6 +1,8 @@
 import express from "express";
 import validUrl from "valid-url";
-import db from "./db";
+import * as db from "./db";
+
+console.log({select: db.select('tabela', {a: 3, b:4})});
 
 import { createLogger, format, transports } from "winston";
 const { combine, timestamp, label, printf } = format;
@@ -39,8 +41,12 @@ app.use(express.json());
 
 // Transaction ID middleware
 app.use(async (req: express.Request, res: express.Response, next) => {
-  const queryResult = await db.query(`select nextval('transaction_id')`, []);
-  res.locals.transaction_id = queryResult[1][0].nextval;
+  const queryResult = await db.nextVal(`transaction_id`);
+  if(!queryResult){
+    next();
+    return;
+  }
+  res.locals.transaction_id = queryResult.rows[0].nextval;
   next();
 });
 
@@ -73,9 +79,10 @@ app.get("/:slug", async function (req: express.Request, res: express.Response) {
   let code = 200;
 
   // url exists?
-  const result = await db.query("SELECT * FROM urls WHERE slug = $1", [slug]);
+  //const result = await db.query("SELECT * FROM urls WHERE slug = $1", [slug]);
+  const result = await db.select('urls', {slug});
 
-  if (result[1].length === 0) {
+  if (!result) {
     code = 404;
     res.status(code).redirect("/");
 
@@ -89,7 +96,7 @@ app.get("/:slug", async function (req: express.Request, res: express.Response) {
     return;
   }
 
-  const redirect = result[1][0].redirect;
+  const redirect = result.rows[0].redirect;
   res.status(code).redirect(redirect);
 
   endpointLogger.info({
@@ -123,9 +130,9 @@ app.post("/:slug", async function (req, res) {
   }
 
   // url exists?
-  const result = await db.query("SELECT * FROM urls WHERE slug = $1", [slug]);
+  const result = await db.select('urls', {slug});
 
-  if (result[1].length > 0) {
+  if (result) {
     code = 402;
     body = "This is slug is already in use. Please choose another one";
     res.status(code).send(body);
@@ -140,9 +147,9 @@ app.post("/:slug", async function (req, res) {
     return;
   }
 
-  await db.query(
-    "INSERT INTO urls(slug, redirect) VALUES ($1, $2)",
-    [slug, redirect]
+  await db.insert(
+    'urls', 
+    {slug, redirect}
   );
 
   body = `${slug} => ${redirect}`;
