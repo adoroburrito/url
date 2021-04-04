@@ -1,11 +1,11 @@
 import pg, { Pool, QueryResult } from "pg";
 import dotenv from "dotenv";
 import path from "path";
-import { camelCase, snakeCase } from "change-object-case";
+import { snakeCase } from "change-object-case";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-const connectionString = process.env.DB_CONNECTION_STRING;
+const connectionString = process.env.DATABASE_URL;
 
 const pool = new Pool({
   connectionString,
@@ -81,7 +81,9 @@ const generateInsertValues = (insertParams: any) => {
 const nextVal = async (
   sequenceName: String,
 ): Promise<QueryResult | false> => {
-  const query = `SELECT nextval(${sequenceName})`;
+  const query = `SELECT nextval('${sequenceName}');`;
+
+  console.log('db->nextVal', {query});
 
   const client = await pool.connect();
   try {
