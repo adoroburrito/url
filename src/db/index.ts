@@ -17,7 +17,7 @@ pool.connect().then(async (client: pg.PoolClient) => {
     const response = await client.query("SELECT now()");
     console.log("Connection to database OK:", response.rows[0].now);
   } catch (err) {
-    console.error(err.stack);
+    console.error('Error whilte trying to connect to databse:', err.stack);
     process.exit();
   } finally {
     client.release();

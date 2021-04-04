@@ -2,11 +2,8 @@ import express from "express";
 import validUrl from "valid-url";
 import * as db from "./db";
 
-console.log({select: db.select('tabela', {a: 3, b:4})});
-
 import { createLogger, format, transports } from "winston";
 const { combine, timestamp, label, printf } = format;
-
 
 // Winston logger
 const loggerFormat = printf(({ level, message, label, timestamp }) => {
@@ -63,7 +60,7 @@ app.use((req: express.Request, res: express.Response, done) => {
 
 app.get("/", function (req: express.Request, res: express.Response) {
   const code = 200;
-  const body = `url shortener. post me with a slug you'd like (url.nog.sh/%slug_here%) with a json like this to create a new shortened link: {"url": "https://yourcoolurl.com"}`;
+  const body = `This is an URL shortener. /POST me with a slug you'd like (url.nog.dev/%slug_here%) with a json like this to create a new shortened link: <pre>{"url": "https://yourcoolurl.com"}</pre>`;
   res.status(code).send(body);
 
   endpointLogger.info({

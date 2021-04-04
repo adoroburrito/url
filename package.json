@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec npx ts-node src/index.ts",
+    "dev": "nodemon --watch src --ext ts --exec npx ts-node --files src/index.ts",
     "prod": "tsc && node build/index.js"
   },
   "author": "",
