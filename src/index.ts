@@ -163,6 +163,19 @@ app.post("/:slug", async function (req, res) {
 
 const port: string = process.env.EXPRESS_PORT || "3000";
 
-app.listen(port, function () {
+const httpServer = app.listen(port, function () {
   console.log(`app listening on port ${port}`);
 });
+
+async function startGracefulShutdown(signal: String) {
+  console.info(`'${signal}' signal received.`);
+  console.log('Closing http server...');
+  httpServer.close(() => {
+    console.log('httpServer closed.')
+  });
+
+  await db.closeConnection();
+}
+
+process.on('SIGTERM', startGracefulShutdown);
+process.on('SIGINT', startGracefulShutdown);

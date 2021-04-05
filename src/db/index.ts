@@ -44,6 +44,18 @@ export default class DBSingleton {
     }
   }
 
+  public async closeConnection(): Promise<Boolean> {
+    console.log('Closing DB connection pool...');
+    try{
+      await this.pool.end();
+      console.log('DB connection pool closed.');
+      return true;
+    }catch(error){
+      console.error('Faield to close connection pool:', {error});
+      return false;
+    }
+  }
+
 
   public async select(table: String, whereParams: Object): Promise<QueryResult | false> {
     const query = `SELECT * FROM ${table} WHERE ${this.generateWhere(whereParams)}`;
