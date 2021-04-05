@@ -1,6 +1,8 @@
 import express from "express";
 import validUrl from "valid-url";
-import * as db from "./db";
+import DBSingleton from "./db";
+
+const db = DBSingleton.getInstance();
 
 import { createLogger, format, transports } from "winston";
 const { combine, timestamp, label, printf } = format;
@@ -16,8 +18,7 @@ const loggerFormat = printf(({ level, message, label, timestamp }) => {
 
 const middlewareLogger = createLogger({
   format: combine(
-    label({ label: "server.express.middleware.logger" }),
-    timestamp(),
+    label({ label: "server.express.middleware.logger" }), timestamp(),
     loggerFormat
   ),
   transports: [new transports.Console()],
