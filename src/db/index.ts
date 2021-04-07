@@ -9,7 +9,8 @@ export default class DBSingleton {
   private static singleton: DBSingleton;
   private pool: pg.Pool;
 
-  private constructor() { const connectionString = process.env.DATABASE_URL;
+  private constructor() { 
+    const connectionString = process.env.DATABASE_URL;
 
     this.pool = new Pool({
       connectionString,
