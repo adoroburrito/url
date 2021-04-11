@@ -3,3 +3,9 @@ declare module 'change-object-case' {
   export function camelCase<changeableCase>(arg: changeableCase): changeableCase;
   export function snakeCase<changeableCase>(arg: changeableCase): changeableCase;
 };
+
+interface controllerResponse {
+  code: number;
+  returnMessage?: string;
+  redirect?: string;
+};

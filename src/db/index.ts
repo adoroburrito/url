@@ -1,7 +1,6 @@
 import pg, { Pool, QueryResult } from "pg";
 import dotenv from "dotenv";
 import path from "path";
-import { snakeCase } from "change-object-case";
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
@@ -9,7 +8,7 @@ export default class DBSingleton {
   private static singleton: DBSingleton;
   private pool: pg.Pool;
 
-  private constructor() { 
+  private constructor() {
     const connectionString = process.env.DATABASE_URL;
 
     this.pool = new Pool({
@@ -20,7 +19,7 @@ export default class DBSingleton {
   }
 
   public static getInstance(): DBSingleton {
-    if(!DBSingleton.singleton){
+    if (!DBSingleton.singleton) {
       DBSingleton.singleton = new DBSingleton();
     }
 
@@ -28,17 +27,17 @@ export default class DBSingleton {
   }
 
   public async checkConnection(): Promise<Boolean> {
-    console.log('Testing db connection...');
+    console.log("Testing db connection...");
 
     // creates a client in the pool and tries to query the time from the db memory
     const client: pg.PoolClient = await this.pool.connect();
-    
+
     try {
       const response = await client.query("SELECT now()");
       console.log("Connection to database OK:", response.rows[0].now);
       return true;
     } catch (err) {
-      console.error('Error whilte trying to connect to databse:', err.stack);
+      console.error("Error whilte trying to connect to databse:", err.stack);
       return false;
     } finally {
       client.release();
@@ -46,39 +45,42 @@ export default class DBSingleton {
   }
 
   public async closeConnection(): Promise<Boolean> {
-    console.log('Closing DB connection pool...');
-    try{
+    console.log("Closing DB connection pool...");
+    try {
       await this.pool.end();
-      console.log('DB connection pool closed.');
+      console.log("DB connection pool closed.");
       return true;
-    }catch(error){
-      console.error('Faield to close connection pool:', {error});
+    } catch (error) {
+      console.error("Faield to close connection pool:", { error });
       return false;
     }
   }
 
-
-  public async select(table: String, whereParams: Object): Promise<QueryResult | false> {
-    const query = `SELECT * FROM ${table} WHERE ${this.generateWhere(whereParams)}`;
+  public async select(
+    table: String,
+    whereParams: Object
+  ): Promise<QueryResult | false> {
+    const query = `SELECT * FROM ${table} WHERE ${this.generateWhere(
+      whereParams
+    )}`;
+    console.log(`db.select -> ${query}`);
 
     const client = await this.pool.connect();
     try {
       return client.query(query);
     } catch (error) {
-      console.log(error);
+      console.log("error while trying to select", { error });
       return false;
     } finally {
       client.release();
     }
   }
-  
-  public async generateWhere(whereParams: any) {
-    whereParams = snakeCase(whereParams);
 
+  public generateWhere(whereParams: any) {
     let whereString = "";
 
-    for(const property in whereParams){
-      whereString += `${property} = ${whereParams[property]}, `
+    for (const property in whereParams) {
+      whereString += `${property} = '${whereParams[property]}', `;
     }
 
     whereString = whereString.slice(0, -2);
@@ -86,8 +88,15 @@ export default class DBSingleton {
     return whereString;
   }
 
-  public async insert(table: String, insertParams: Object): Promise<QueryResult | false>{
-    const query = `INSERT INTO ${table} (${this.generateInsertColumns(insertParams)}) VALUES (${this.generateInsertValues(insertParams)})`;
+  public async insert(
+    table: String,
+    insertParams: Object
+  ): Promise<QueryResult | false> {
+    const query = `INSERT INTO ${table} (${this.generateInsertColumns(
+      insertParams
+    )}) VALUES (${this.generateInsertValues(insertParams)})`;
+
+    console.log("insert ->", { query });
 
     const client = await this.pool.connect();
     try {
@@ -103,7 +112,7 @@ export default class DBSingleton {
   public async nextVal(sequenceName: String): Promise<QueryResult | false> {
     const query = `SELECT nextval('${sequenceName}');`;
 
-    console.log('db->nextVal', {query});
+    console.log("db->nextVal", { query });
 
     const client = await this.pool.connect();
     try {
@@ -117,10 +126,9 @@ export default class DBSingleton {
   }
 
   public generateInsertColumns(insertParams: Object): String {
-    insertParams = snakeCase(insertParams);
     let columns = "";
 
-    for(const property in insertParams){
+    for (const property in insertParams) {
       columns += `${property}, `;
     }
 
@@ -128,10 +136,9 @@ export default class DBSingleton {
   }
 
   public generateInsertValues(insertParams: any): String {
-    insertParams = snakeCase(insertParams);
     let values = "";
-    for(const property in insertParams){
-      values += `${insertParams[property]}, `;
+    for (const property in insertParams) {
+      values += `'${insertParams[property]}', `;
     }
 
     return values.slice(0, -2);

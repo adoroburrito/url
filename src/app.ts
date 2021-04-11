@@ -2,7 +2,7 @@ import express from "express";
 import DBSingleton from "./db";
 import { createLogger, format, transports } from "winston";
 const { combine, timestamp, label, printf } = format;
-import validUrl from "valid-url";
+import routes from "./routes"
 
 export default class App {
   port: Number;
@@ -42,7 +42,7 @@ export default class App {
     });
 
     // Transaction ID middleware
-    this.expressApp.use(async (req: express.Request, res: express.Response, next) => {
+    this.expressApp.use(async (_: express.Request, res: express.Response, next) => {
       const queryResult = await this.db.nextVal(`transaction_id`);
       if(!queryResult){
         next();
@@ -64,64 +64,8 @@ export default class App {
     });
   }
 
-  private setupExpressRoutes(db = this.db): void{
-    this.expressApp.get("/", function (req: express.Request, res: express.Response) {
-      const code = 200;
-      const body = `This is an URL shortener. /POST me with a slug you'd like (url.nog.dev/%slug_here%) with a json like this to create a new shortened link: <pre>{"url": "https://yourcoolurl.com"}</pre>`;
-        res.status(code).send(body);
-    });
-
-    this.expressApp.get("/:slug", async function (req: express.Request, res: express.Response) {
-      const slug = req.params.slug;
-      let code = 200;
-
-      // url exists?
-      //const result = await db.query("SELECT * FROM urls WHERE slug = $1", [slug]);
-      const result = await db.select('urls', {slug});
-
-      if (!result) {
-        code = 404;
-        res.status(code).redirect("/");
-        return;
-      }
-
-      const redirect = result.rows[0].redirect;
-      res.status(code).redirect(redirect);
-    });
-
-    this.expressApp.post("/:slug", async function (req, res) {
-      const slug = req.params.slug;
-      const redirect = req.body.url;
-      let code = 201;
-      let body: string;
-
-      // redirect ok?
-      if (!validUrl.isUri(redirect)) {
-        code = 400;
-        body = "Improper redirect. Please provide a valid url.";
-        res.status(code).send(body);
-        return;
-      }
-
-      // url exists?
-      const result = await db.select('urls', {slug});
-
-      if (result) {
-        code = 402;
-        body = "This is slug is already in use. Please choose another one";
-        res.status(code).send(body);
-        return;
-      }
-
-      await db.insert(
-        'urls', 
-        {slug, redirect}
-      );
-
-      body = `${slug} => ${redirect}`;
-      res.status(code).send(body);
-    });
-
+  private setupExpressRoutes(): void{
+    this.expressApp.use("/", routes);
   }
 
   listen(): void{
